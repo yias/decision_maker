@@ -28,6 +28,8 @@ struct sigNals{
 
 int writeMatFile(std::string filename, std::string valName, std::vector<double> cont){
 
+    std::cout<<"\ntrying to save to "<<filename<<"\n";
+
 	MATFile *pmat;
 	mxArray *pa1;
 	filename += ".mat";

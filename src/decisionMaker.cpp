@@ -34,7 +34,7 @@ enum hand{
     right=1,
 };
 
-int sRate=300;                                                    // set the sample rate (Hz)
+int sRate=300;                                                   // set the sample rate (Hz)
 int trialCounter=0;                                              // counter for the trials
 double startTime;
 
@@ -106,18 +106,16 @@ void daqListener(const decision_maker::vtmsg daqmsg){
 
 
 
-    if(daqCounter>2){
-        graspTime.push_back((ros::Time::now().toSec())-startTime);
+    if(daqCounter>0){
+    graspTime.push_back((ros::Time::now().toSec())-startTime);
     mVotes.push_back(daqmsg.vote);
-
-    //std::cout<<"daq listener okokkokoko\n";
 
     //checkVelocityHistory.push_back(check_velocity(velocityNormHistory.back(),velThreshold));
 
     if(check_velocity(velocityNormHistory.back(),velThreshold)) {
 
-        //grasp_type=majority_vote(mVotes,nbClasses, grasp_threshold,grasp_type);
-        grasp_type=5;
+        grasp_type=majority_vote(mVotes,nbClasses, grasp_threshold,grasp_type);
+
         std::cout<<"grasp type: "<<grasp_type<<"\n";
         graspTypeHistory.push_back(grasp_type);
 
@@ -151,12 +149,15 @@ void mocapListener(const geometry_msgs::PoseStamped& mocapmsg){
        for(int i=0;i<3;i++){
            previousSample[i]=mocapHistoryPosition[i][mocapCounter-1];
        }
+
+       //std::cout<<"x: "<<previousSample[0]<<", y: "<<previousSample[1]<<",z: "<<previousSample[2]<<"\n";
        mocapVelocity=calcDtVelocity(mocapPosition,previousSample,(double)1/std::min((double)sRate,(double)mocapRate));
 
         for(int i=0;i<3;i++){
             mocapHistoryVelocity[i].push_back(mocapVelocity[i]);
         }
         velocityNormHistory.push_back(velocityNorm(mocapHistoryVelocity,(int)(lookBack*sRate)));
+        //std::cout<<"\nvel: "<<velocityNormHistory.back()<<"\n";
         //checkVelocityHistory.push_back(check_velocity(velocityNormHistory.back(),velThreshold));
         //checkVelocityHistory.push_back(1);
        // std::cout<<"velocity: " << check_velocity(velocityNormHistory.back(),velThreshold) << "\n";// << velocityNormHistory.back() << " "
@@ -303,7 +304,7 @@ int main(int argc, char **argv)
 
 
 
-    //startTime=ros::Time::now().toSec();
+    startTime=ros::Time::now().toSec();
 
     // set the loop rate
     ros::Rate loop_rate(sRate);
@@ -417,6 +418,10 @@ void saveRecordings(){
     std::cout<<"Ready for the next trial\n";
     trialCounter++;
     grasp_type=0;
+    mocapCounter=0;
+    daqCounter=0;
+    allegroCounter=0;
+    startTime=ros::Time::now().toSec();
 
 }
 
