@@ -118,7 +118,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 
-set(MATLAB_ROOT /usr/local/MATLAB/R2016a)
+set(MATLAB_ROOT /usr/local/MATLAB/R2016b)
 include_directories(include
   ${catkin_INCLUDE_DIRS}
   ${MATLAB_ROOT}/extern/include
