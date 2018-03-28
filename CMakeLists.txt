@@ -118,10 +118,10 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 
-set(MATLAB_ROOT /usr/local/MATLAB/R2016b)
+##set(MATLAB_ROOT /usr/local/MATLAB/R2016b)
 include_directories(include
   ${catkin_INCLUDE_DIRS}
-  ${MATLAB_ROOT}/extern/include
+  ##${MATLAB_ROOT}/extern/include
 )
 
 ## Declare a C++ library
@@ -144,20 +144,20 @@ include_directories(include
 ## Specify libraries to link a library or executable target against
 
 # Your-external "mylib", add GLOBAL if the imported library is located in directories above the current.
-add_library( mat SHARED IMPORTED )
-set_target_properties( mat PROPERTIES IMPORTED_LOCATION ${MATLAB_ROOT}/bin/glnxa64/libmat.so )
+##add_library( mat SHARED IMPORTED )
+##set_target_properties( mat PROPERTIES IMPORTED_LOCATION ${MATLAB_ROOT}/bin/glnxa64/libmat.so )
 
-add_library( mex SHARED IMPORTED )
-set_target_properties( mex PROPERTIES IMPORTED_LOCATION ${MATLAB_ROOT}/bin/glnxa64/libmex.so )
+##add_library( mex SHARED IMPORTED )
+##set_target_properties( mex PROPERTIES IMPORTED_LOCATION ${MATLAB_ROOT}/bin/glnxa64/libmex.so )
 
-add_library( mx SHARED IMPORTED )
-set_target_properties( mx PROPERTIES IMPORTED_LOCATION ${MATLAB_ROOT}/bin/glnxa64/libmx.so )
+##add_library( mx SHARED IMPORTED )
+##set_target_properties( mx PROPERTIES IMPORTED_LOCATION ${MATLAB_ROOT}/bin/glnxa64/libmx.so )
 
 
 #LINK_DIRECTORIES(${MATLAB_ROOT}/bin/glnxa64)
 target_link_libraries(decisionMaker
    ${catkin_LIBRARIES}
-   mx mex mat
+ #  mx mex mat
  )
 
 #############
