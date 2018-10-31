@@ -130,14 +130,14 @@ int majority_vote(std::vector<int> Votes, int nb_classes, double threshold, int 
 
     std::cout<<" confidence "<<(double)classes[std::distance(classes.begin(),result)/Votes.size()]<<"\n";
 
-    //if((Votes.size()>2)&&(classes[std::distance(classes.begin(),result)]/Votes.size()>threshold)){
+    if((Votes.size()>10)&&(classes[std::distance(classes.begin(),result)]/Votes.size()>threshold)){
        //std::cout<<" majority vote: "<<std::distance(classes.begin(),result)+1<<"\n";
 
         return std::distance(classes.begin(),result)+1;
 
-    //}else{
-    //   return previous_grasp;
-    //}
+    }else{
+       return previous_grasp;
+    }
 
 
 

@@ -23,8 +23,8 @@
 #include <termios.h>
 
 
+//#include "decision_maker/MatlabLib.h"
 #include "decision_maker/additional_functions.h"
-#include "handtracker/spper.h"
 
 
 struct stat st = {0};
@@ -47,8 +47,6 @@ double lookBack=0.1;                                             // the timewind
 double velThreshold=0.018;                                       // velocity threshold for destinguish the motion or no=motion of the hand
 int mocapRate=250;                                               // the sample rate of the motion capture system
 
-double handSpeed=0;
-
 std::vector<double> mocapPosition(3,0);                          // vector for the position of the hand
 std::vector<double> mocapVelocity(3,0);                          // vector for the velocity of the hand
 
@@ -66,7 +64,7 @@ int daqCounter=0;                                                // counter for 
 
 int nbClasses=5;                                                 // number of different classes
 
-int grasp_type=3;                                                // the outecome of the majority vote
+int grasp_type=0;                                                // the outecome of the majority vote
 
 double grasp_threshold=0.2;                                      // confidence threshold to change the grasp
 
@@ -112,40 +110,23 @@ void daqListener(const decision_maker::vtmsg daqmsg){
     graspTime.push_back((ros::Time::now().toSec())-startTime);
     mVotes.push_back(daqmsg.vote);
 
+//    mVotes.push_back(1);
+
     //checkVelocityHistory.push_back(check_velocity(velocityNormHistory.back(),velThreshold));
 
-    if(check_velocity(velocityNormHistory.back(),velThreshold)) {
+    //if(check_velocity(velocityNormHistory.back(),velThreshold)) {
 
         grasp_type=majority_vote(mVotes,nbClasses, grasp_threshold,grasp_type);
 
         std::cout<<"grasp type: "<<grasp_type<<"\n";
         graspTypeHistory.push_back(grasp_type);
 
-    }
+    //}
     }
 
     daqCounter++;
 
     //ROS_INFO("I heard: [%d] messages from daq\n", daqCounter);
-}
-
-
-void hhandListener(const handtracker::spper htmsg){
-
-    /*-- Callback function for subscriber of the mocap system --*/
-
-    
-    
-    handSpeed=htmsg.sPer;
-    
-
-
-
-
-
-
-
-    //ROS_INFO("I heard: [%d] messages from mocap\n", mocapCounter);
 }
 
 void mocapListener(const geometry_msgs::PoseStamped& mocapmsg){
@@ -187,7 +168,7 @@ void mocapListener(const geometry_msgs::PoseStamped& mocapmsg){
 
     }
 
-    //std::cout<<"mocap listener okokkokoko\n";
+
 
 
     mocapCounter++;
@@ -277,8 +258,6 @@ int main(int argc, char **argv)
     decision_maker::vtmsg graspmsg;
 
 
-
-
     // resize the vectors of position and velocity according to the numbers of DOF of the allegro hand
     righHand_msg.velocity.resize(16);
     righHand_msg.position.resize(16);
@@ -315,9 +294,8 @@ int main(int argc, char **argv)
 
     ros::Subscriber daqSub = n.subscribe("win_pub", 2, daqListener);
 
-    ros::Subscriber mocapSub=n.subscribe("hand/pose", 10, mocapListener);
+    ros::Subscriber mocapSub=n.subscribe("HAND/pose", 10, mocapListener);
 
-    ros::Subscriber handSub = n.subscribe("/lwr/speedPercentage", 2, hhandListener);
 
 
     // set subscribers to listen the joint states of the Allegro hands
@@ -341,42 +319,19 @@ int main(int argc, char **argv)
     {
         // set the joint position of the allegro hand
 
-        if (handSpeed>0.2){
-
-            righHand_msg.position=rightHandConfiguration[grasp_type];
-            leftHand_msg.position=leftHandConfiguration[grasp_type];
-            graspmsg.vote=grasp_type;
-
-            // publish the messages
-            joint_velocity[0]=0.1*handSpeed/20;
-            joint_velocity[1]=0.1*handSpeed/20;
-            joint_velocity[2]=0.1*handSpeed/20;
-            joint_velocity[3]=0.1*handSpeed/20;
-            joint_velocity[4]=0.1*handSpeed/20;
-            joint_velocity[5]=0.1*handSpeed/20;
-            joint_velocity[6]=0.1*handSpeed/20;
-            joint_velocity[7]=0.1*handSpeed/20;
-            joint_velocity[8]=0.1*handSpeed/20;
-            joint_velocity[9]=0.1*handSpeed/20;
-            joint_velocity[10]=0.1*handSpeed/20;
-            joint_velocity[11]=0.1*handSpeed/20;
-            joint_velocity[12]=0.1*handSpeed/20;
-            joint_velocity[13]=0.1*handSpeed/20;
-            joint_velocity[14]=0.1*handSpeed/20;
-            joint_velocity[15]=0.1*handSpeed/20;
-
-            righHand_msg.velocity=joint_velocity;
-            leftHand_msg.velocity=joint_velocity;
-            allegorRight_pub.publish(righHand_msg);
-            allegorLeft_pub.publish(leftHand_msg);
-            graspType_pub.publish(graspmsg);
-        }
-
-        
+        righHand_msg.position=rightHandConfiguration[grasp_type];
+        leftHand_msg.position=leftHandConfiguration[grasp_type];
 
         // set the grasp type
 
-        
+        graspmsg.vote=grasp_type;
+
+
+        // publish the messages
+
+        allegorRight_pub.publish(righHand_msg);
+        allegorLeft_pub.publish(leftHand_msg);
+        graspType_pub.publish(graspmsg);
 
         // if the key 't' is pressed, save the data and clear the data for the next trial
 
@@ -410,26 +365,26 @@ void saveRecordings(){
 
     // create directory inside the folder data for saving the data of the trial
 
-    // std::string dirName="src/decision_maker/data/trial"+std::to_string(trialCounter+1);
+    std::string dirName="src/decision_maker/data/trial"+std::to_string(trialCounter+1);
 
-    // if (stat(dirName.c_str(), &st) == -1) {
-    //     mkdir(dirName.c_str(), 0700);
-    // }
+    if (stat(dirName.c_str(), &st) == -1) {
+        mkdir(dirName.c_str(), 0700);
+    }
 
 
-    // // save the data to the folder
+    // save the data to the folder
 
-    // if(!mocapHistoryPosition[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/mocapHistoryPosition","mocapHistoryPosition",mocapHistoryPosition);
-    // if(!mocapHistoryVelocity[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/mocapHistoryVelocity","mocapHistoryVelocity",mocapHistoryVelocity);
+//    if(!mocapHistoryPosition[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/mocapHistoryPosition","mocapHistoryPosition",mocapHistoryPosition);
+//    if(!mocapHistoryVelocity[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/mocapHistoryVelocity","mocapHistoryVelocity",mocapHistoryVelocity);
 
-    // if(!mocapTime.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/mocapTime","mocapTime",mocapTime);
-    // //if(!checkVelocityHistory.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/checkVelocityHistory","checkVelocityHistory",checkVelocityHistory);
-    // if(!graspTypeHistory.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/graspTypeHistory","graspTypeHistory",graspTypeHistory);
-    // if(!velocityNormHistory.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/velocityNormHistory","velocityNormHistory",velocityNormHistory);
-    // if(!graspTime.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/graspTime","graspTime",graspTime);
+//    if(!mocapTime.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/mocapTime","mocapTime",mocapTime);
+//    //if(!checkVelocityHistory.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/checkVelocityHistory","checkVelocityHistory",checkVelocityHistory);
+//    if(!graspTypeHistory.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/graspTypeHistory","graspTypeHistory",graspTypeHistory);
+//    if(!velocityNormHistory.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/velocityNormHistory","velocityNormHistory",velocityNormHistory);
+//    if(!graspTime.empty()) writeMatFile("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/graspTime","graspTime",graspTime);
 
-    // if(!rightHandHistory[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/rightHandHistory","rightHandHistory",rightHandHistory);
-    // if(!leftHandHistory[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/leftHandHistory","leftHandHistory",leftHandHistory);
+//    if(!rightHandHistory[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/rightHandHistory","rightHandHistory",rightHandHistory);
+//    if(!leftHandHistory[0].empty()) saveData("src/decision_maker/data/trial"+std::to_string(trialCounter+1)+"/leftHandHistory","leftHandHistory",leftHandHistory);
 
 
     std::cout<<"\nTrial " << trialCounter+1 <<" has been saved\n";
